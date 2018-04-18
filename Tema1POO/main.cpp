@@ -128,11 +128,12 @@ public:
     friend GrafOrientat& operator +(const GrafOrientat&,const GrafOrientat&);
     GrafOrientat& operator =(const GrafOrientat&);
     int** det_matrice_drumuri();
+    bool graf_aciclic();
     bool graf_tare_conex();
     int* componente_tare_conexe();
     void sortare_topologica();
     void BFS(int);
-    void DFS(int,int&);
+    void DFS(int);
 };
 GrafOrientat::GrafOrientat()
 {
@@ -386,9 +387,8 @@ void GrafOrientat::BFS(int nod_start)
         o++;
     }
 }
-void GrafOrientat::DFS(int nod_start,int &graf_ciclic)
+void GrafOrientat::DFS(int nod_start)
 {
-    graf_ciclic=0;
     int *stiva=new int[*numar_noduri];
     int *viz=new int[*numar_noduri];
     for(int i=0;i<*numar_noduri;i++)
@@ -425,16 +425,77 @@ void GrafOrientat::DFS(int nod_start,int &graf_ciclic)
                     k++;
                     stiva[k]=p[t1];
                 }
-                else
-                {
-                    graf_ciclic=1;
-                }
             }
         }
     }
 }
+bool GrafOrientat::graf_aciclic()
+{
+    int *stiva=new int[*numar_noduri];
+    int *coada=new int[*numar_noduri];
+    int *viz=new int[*numar_noduri];
+    int kn=0;
+    for(int i=0;i<*numar_noduri;i++)
+    {
+        viz[i]=0;
+        coada[i]=graf[i].getindice();
+    }
+    while(kn<*numar_noduri)
+    {
+    int k=0;
+    stiva[k]=coada[kn];
+    for(int i=0;i<*numar_noduri;i++)
+    {
+        viz[i]=0;
+    }
+    while(k>=0)
+    {
+        int i;
+        for(i=0;i<*numar_noduri;i++)
+        {
+            if(stiva[k]==graf[i].getindice())
+                break;
+        }
+        stiva[k]=-1;
+        k--;
+        if(viz[i]==0)
+        {
+            viz[i]=1;
+            int *p=graf[i].getarce();
+            for(int t1=0;t1<graf[i].getgrad_extern();t1++)
+            {
+                if(p[t1]==coada[kn])
+                        return false;
+                int t2;
+                for(t2=0;t2<*numar_noduri;t2++)
+                {
+                    if(p[t1]==graf[t2].getindice())
+                        break;
+                }
+
+                if(viz[t2]==0)
+                {
+                    k++;
+                    stiva[k]=p[t1];
+
+                }
+            }
+        }
+    }
+    kn++;
+    }
+    return true;
+}
 void GrafOrientat::sortare_topologica()
 {
+    bool t=graf_aciclic();
+    if(t==false)
+    {
+        cout<<"Graf ciclic\n";
+        return;
+    }
+    else
+    {
     int *stiva=new int[*numar_noduri];
     int k=-1;
     for(int i=0;i<*numar_noduri;i++)
@@ -444,18 +505,6 @@ void GrafOrientat::sortare_topologica()
             k++;
             stiva[k]=graf[i].getindice();
         }
-    }
-    int t=0;
-    for(int i=0;i<=k;i++)
-    {
-        DFS(stiva[i],t);
-        if(t==1)
-            break;
-    }
-    if(t==1)
-    {
-        cout<<"Graf ciclic\n";
-        return;
     }
     int *viz=new int[*numar_noduri];
     for(int i=0;i<*numar_noduri;i++)
@@ -481,6 +530,7 @@ void GrafOrientat::sortare_topologica()
             k++;
             stiva[k]=p[j];
         }
+    }
     }
 }
 int** GrafOrientat::det_matrice_drumuri()
